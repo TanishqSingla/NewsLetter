@@ -1,6 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const request = require("request");
+const https = require("https");
+
+//Keys and ids
+const { key, listId } = require("./key");
 
 const app = express();
 
@@ -20,7 +24,38 @@ app.post("/", (req, res) => {
   const lastName = req.body.lastName;
   const email = req.body.email;
 
-  console.log(firstName, lastName, email);
+  const data = {
+    members: [
+      {
+        email_address: email,
+        status: "subscribed",
+        merge_fields: {
+          FNAME: firstName,
+          LNAME: lastName,
+        },
+      },
+    ],
+  };
+
+  const jsonData = JSON.stringify(data);
+
+  const url = "https://us8.api.mailchimp.com/3.0/lists/" + listId;
+
+  const options = {
+    method: "POST",
+    auth: `AlexEths:${key}`,
+  };
+
+  const request = https.request(url, options, (response) => {
+    if (response.statusCode === 200) {
+      res.send("Successfully subscribed");
+    } else {
+      res.send("There was an error while signing up");
+    }
+  });
+
+  request.write(jsonData);
+  request.end();
 });
 
 app.listen(3000, () => {
